@@ -1,4 +1,4 @@
-"""this program creates a scrolling matric"""
+"""this program creates a scrolling matrix"""
 
 
 from collections import deque
@@ -19,22 +19,14 @@ class Grid:
         for i in range(self.width):
             if random() < 0.1:
                 row.append(Cell.MINE)
-            else
+            else:
                 row.append(Cell.EMPTY)
         self.data.append(row)
         
     def click(self,x,y):
         cell = self.data[y][x]
-        if cell = Cell.MINE:
+        if cell == Cell.MINE:
             raise ValueError('You Died')
-
-    def neighbours(self,x,y):
-        
-        
-
-
-               
-        
         
         
         
