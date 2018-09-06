@@ -1,5 +1,8 @@
 from enum import Enum
 import random
+
+from enum_types import State, TileTypes, types, Tile
+
 TILE = 32
 
 TILESW = 20
@@ -11,60 +14,6 @@ HEIGHT = TILESH * TILE
 WINNING = True
 
 viewport_y = 0
-
-
-class TileTypes(Enum):
-    BLANK = 'blank'
-    N1 = 'one'
-    N2 = 'two'
-    N3 = 'three'
-    N4 = 'four'
-    N5 = 'five'
-    N6 = 'six'
-    N7 = 'seven'
-    N8 = 'eight'
-    MINE = 'mine'
-
-
-types = list(TileTypes)
-
-
-class State(Enum):
-    COVERED = 1
-    UNCOVERED = 2
-    FLAGGED = 3
-
-
-
-class Tile:
-    def __init__(self, state=None):
-        self.flagged = False
-        self.state = state or State.COVERED
-        self.type = random.choice(types)
-
-    @property
-    def image(self):
-        if self.state is State.COVERED:
-            return 'cover'
-        elif self.state is State.FLAGGED:
-            return 'flag'
-        else:
-            return self.type.value
-
-    def on_uncover(self):
-        self.state = State.UNCOVERED
-
-    def on_flag(self):
-        if self.state is State.COVERED:
-            self.state = State.FLAGGED
-        elif self.state is State.FLAGGED:
-            self.state = State.COVERED
-
-    def is_dangerous(self):
-        if (self.state is State.COVERED and self.type is TileTypes.MINE) or \
-           (self.state is State.FLAGGED and self.type is not TileTypes.MINE):
-            return True
-        return False
 
 
 

@@ -3,30 +3,27 @@
 
 from collections import deque
 from random import random
-from enum import Enum
 
-class Cell(Enum):
-    MINE = 1
-    EMPTY = 2
+from enum_types import TileTypes, Tile
+
 
 class Grid:
-    def __init__(self, width=20):
+    def __init__(self, height=16, width=20):
         self.width = width
         self.data = deque()
+        for _ in range(height):
+            self.new_row()
 
-    def new_row(self):   
+    def new_row(self):
         row = []
         for i in range(self.width):
             if random() < 0.1:
-                row.append(Cell.MINE)
+                row.append(Tile(TileTypes.MINE))
             else:
-                row.append(Cell.EMPTY)
+                row.append(Tile(TileTypes.EMPTY))
         self.data.append(row)
-        
+
     def click(self,x,y):
         cell = self.data[y][x]
-        if cell == Cell.MINE:
+        if cell.type is TileTypes.MINE:
             raise ValueError('You Died')
-        
-        
-        
