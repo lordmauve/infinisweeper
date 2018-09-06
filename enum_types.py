@@ -13,9 +13,12 @@ class TileTypes(Enum):
     N7 = 'seven'
     N8 = 'eight'
     MINE = 'mine'
+    RED = 'red'
 
 
-types = list(TileTypes)
+types = set(TileTypes)
+types.discard(TileTypes.RED)
+types = list(types)
 
 
 class State(Enum):
@@ -41,6 +44,8 @@ class Tile:
 
     def on_uncover(self):
         self.state = State.UNCOVERED
+        if self.type is TileTypes.MINE:
+            self.type = TileTypes.RED
 
     def on_flag(self):
         if self.state is State.COVERED:
@@ -49,7 +54,9 @@ class Tile:
             self.state = State.COVERED
 
     def is_dangerous(self):
-        if (self.state is State.COVERED and self.type is TileTypes.MINE) or \
-           (self.state is State.FLAGGED and self.type is not TileTypes.MINE):
+        if (self.state is State.COVERED and self.type is TileTypes.MINE):
+            return True
+
+        if (self.state is State.FLAGGED and self.type is not TileTypes.MINE):
             return True
         return False
