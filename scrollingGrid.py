@@ -1,13 +1,14 @@
 """this program creates a scrolling matrix"""
 from random import random
 
-from enum_types import TileTypes, Tile
+from enum_types import TileTypes, Tile, State
 
 
 class Grid:
     def __init__(self, height=16, width=20):
         self.width = width
         self.data = {}
+        self.next_adj = set()
 
         self.miny = -1
         for r in range(-1, height + 1):
@@ -18,7 +19,6 @@ class Grid:
             else:
                 self.push_row()
 
-
     def push_row(self):
         """Create a new row."""
         mine_frac = min(1, self.maxy / 500) ** 0.5
@@ -26,6 +26,9 @@ class Grid:
         self.maxy += 1
         self.data[self.maxy] = row
         self._calculate_row(self.maxy - 1)
+        for x in self.next_adj:
+            self.reveal((x, self.maxy - 1))
+        self.next_adj.clear()
 
     def _gen_row(self, mine_frac):
         row = []
@@ -44,7 +47,7 @@ class Grid:
         for col, tile in enumerate(self.data[row_num]):
             if tile.type == TileTypes.MINE:
                 continue
-            l = col - 1
+            l = max(col - 1, 0)
             r = col + 2
             neighbours = prev_row[l:r] + row[l:r:2] + next_row[l:r]
             value = sum(c.type is TileTypes.MINE for c in neighbours)
@@ -63,10 +66,48 @@ class Grid:
 
     def __getitem__(self, pos):
         x, y = pos
-        return self.data[y][x]
+        try:
+            return self.data[y][x]
+        except (KeyError, IndexError):
+            raise KeyError("Invalid coordinate {!r}".format(pos)) from None
 
     def items(self):
         for rownum in range(self.miny, self.maxy + 1):
             row = self.data[rownum]
             for colnum, tile in enumerate(row):
                 yield (colnum, rownum), tile
+
+    def reveal(self, pos):
+        """Uncover the tile at pos.
+
+        Return the tile type uncovered.
+
+        """
+        adj = {pos,}
+        visited = {pos,}
+
+        while adj:
+            p = adj.pop()
+            visited.add(p)
+            x, y = p
+            if not (0 <= x < self.width):
+                continue
+            if y == self.maxy:
+                self.next_adj.add(x)
+                continue
+            elif y < self.miny:
+                continue
+            tile = self[p]
+            tile.state = State.UNCOVERED
+            if tile.type == TileTypes.BLANK:
+                neighbours = {
+                    (x - 1, y - 1),
+                    (x, y - 1),
+                    (x + 1, y - 1),
+                    (x - 1, y),
+                    (x + 1, y),
+                    (x - 1, y + 1),
+                    (x, y + 1),
+                    (x + 1, y + 1),
+                }
+                adj.update(neighbours - visited)

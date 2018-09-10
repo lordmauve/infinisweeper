@@ -19,7 +19,14 @@ viewport_y = 0
 
 
 
-grid = Grid(height=TILESH, width=TILESW)
+grid = None
+
+
+def generate_grid():
+    global grid
+    grid = Grid(height=TILESH, width=TILESW)
+
+generate_grid()
 
 
 def draw():
@@ -79,5 +86,9 @@ def on_mouse_down(pos, button):
     current = grid[tx, ty]
     if button == mouse.LEFT:
         current.on_uncover()
+        if current.type in (TileTypes.MINE, TileTypes.RED):
+            game_over()
+        elif current.type is TileTypes.BLANK:
+            type = grid.reveal((tx, ty))
     elif button == mouse.RIGHT:
         current.on_flag()
