@@ -2,7 +2,9 @@ from enum import Enum
 import random
 
 from enum_types import State, TileTypes, types, Tile
+from scrollingGrid import Grid
 
+TITLE = "Infinisweeper"
 TILE = 32
 
 TILESW = 20
@@ -17,27 +19,16 @@ viewport_y = 0
 
 
 
-LINES = None
-
-
-def generate_grid():
-    global LINES
-    LINES = [
-        [Tile() for _ in range(TILESW)]
-        for _ in range(1000)
-    ]
-
-generate_grid()
+grid = Grid(height=TILESH, width=TILESW)
 
 
 def draw():
-    screen.fill('red')
-    for y, row in enumerate(LINES):
-        for x, tile in enumerate(row):
-            img = tile.image
-            if not WINNING:
-                img = tile.type.value
-            screen.blit(img, (x * TILE, HEIGHT - (y + 1) * TILE + viewport_y))
+    screen.fill((80, 80, 80))
+    for (x, y), tile in grid.items():
+        img = tile.image
+        if not WINNING:
+            img = tile.type.value
+        screen.blit(img, (x * TILE, HEIGHT - (y + 1) * TILE + viewport_y))
 
     if not WINNING:
         screen.draw.text(
@@ -55,14 +46,16 @@ def update(dt):
     global viewport_y, last_check_row, WINNING
     viewport_y += TILE * 0.25 * dt
     check_row = int(viewport_y // TILE)
-    if check_row > last_check_row and WINNING:
-        last_check_row = check_row
-        for x in range(TILESW):
-            t = LINES[check_row][x]
-            if t.is_dangerous():
-                game_over()
-                break
 
+    if check_row > last_check_row:
+        if WINNING:
+            last_check_row = check_row
+            for x in range(TILESW):
+                t = grid[x, check_row]
+                if t.is_dangerous():
+                    game_over()
+                    break
+        grid.next_row()
 
 
 def game_over():
@@ -83,9 +76,8 @@ def on_mouse_down(pos, button):
     tx = x // TILE
     ty = int(HEIGHT - y + viewport_y) // TILE
     print(f"Button {button} pressed at {(tx, ty)}")
-    current = LINES[ty][tx]
+    current = grid[tx, ty]
     if button == mouse.LEFT:
         current.on_uncover()
     elif button == mouse.RIGHT:
         current.on_flag()
-
