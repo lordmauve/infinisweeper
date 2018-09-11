@@ -24,7 +24,7 @@ grid = None
 def generate_grid():
     global grid
     grid = Grid(height=TILESH, width=TILESW)
-    grid.last_check_row = 0
+    grid.last_check_row = grid.score = 0
 
 generate_grid()
 
@@ -46,14 +46,16 @@ def draw():
         screen.draw.text(
             'Game Over',
             color=(180, 0, 0),
+            shadow=(0.5, 0.5),
             fontsize=100,
             center=(WIDTH // 2, HEIGHT // 2)
         )
     screen.draw.text(
-        "Score: {}".format(grid.last_check_row),
-        color='black',
-        fontsize=32,
-        bottomright=(WIDTH - 8, HEIGHT - 2)
+        "Score: {}".format(grid.score),
+        color='white',
+        owidth=1,
+        fontsize=40,
+        topright=(WIDTH - 8, 2)
     )
 
 
@@ -63,15 +65,19 @@ def update(dt):
     check_row = int(viewport_y // TILE)
 
     if check_row > grid.last_check_row:
+        grid.last_check_row = check_row
+
         if WINNING:
-            grid.last_check_row = check_row
             mistakes = 0
             for x in range(TILESW):
                 t = grid[x, check_row]
                 mistakes += t.reveal()
             if mistakes:
                 game_over()
-            grid.next_row()
+            else:
+                grid.score += 1
+
+        grid.next_row()
 
 
 def game_over():
