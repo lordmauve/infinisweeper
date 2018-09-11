@@ -18,13 +18,13 @@ WINNING = True
 viewport_y = 0
 
 
-
 grid = None
 
 
 def generate_grid():
     global grid
     grid = Grid(height=TILESH, width=TILESW)
+    grid.last_check_row = 0
 
 generate_grid()
 
@@ -37,6 +37,11 @@ def draw():
             img = tile.type.value
         screen.blit(img, (x * TILE, HEIGHT - (y + 1) * TILE + viewport_y))
 
+    screen.draw.filled_rect(
+        Rect(0, HEIGHT - TILE, WIDTH, 5),
+        'red'
+    )
+
     if not WINNING:
         screen.draw.text(
             'Game Over',
@@ -44,25 +49,29 @@ def draw():
             fontsize=100,
             center=(WIDTH // 2, HEIGHT // 2)
         )
-
-
-last_check_row = 0
+    screen.draw.text(
+        "Score: {}".format(grid.last_check_row),
+        color='black',
+        fontsize=32,
+        bottomright=(WIDTH - 8, HEIGHT - 2)
+    )
 
 
 def update(dt):
-    global viewport_y, last_check_row, WINNING
+    global viewport_y, WINNING
     viewport_y += TILE * 0.25 * dt
     check_row = int(viewport_y // TILE)
 
-    if check_row > last_check_row:
+    if check_row > grid.last_check_row:
         if WINNING:
-            last_check_row = check_row
+            grid.last_check_row = check_row
+            mistakes = 0
             for x in range(TILESW):
                 t = grid[x, check_row]
-                if t.is_dangerous():
-                    game_over()
-                    break
-        grid.next_row()
+                mistakes += t.reveal()
+            if mistakes:
+                game_over()
+            grid.next_row()
 
 
 def game_over():
@@ -82,7 +91,6 @@ def on_mouse_down(pos, button):
     x, y = pos
     tx = x // TILE
     ty = int(HEIGHT - y + viewport_y) // TILE
-    print(f"Button {button} pressed at {(tx, ty)}")
     current = grid[tx, ty]
     if button == mouse.LEFT:
         current.on_uncover()

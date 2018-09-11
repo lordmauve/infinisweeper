@@ -14,6 +14,7 @@ class TileTypes(Enum):
     N8 = 'eight'
     MINE = 'mine'
     RED = 'red'
+    CROSS = 'cross'
 
 
 types = set(TileTypes)
@@ -42,6 +43,18 @@ class Tile:
         else:
             return self.type.value
 
+    def reveal(self):
+        if self.state is State.COVERED and self.type is TileTypes.MINE:
+            self.type = TileTypes.RED
+            return True
+
+        if self.state is State.FLAGGED and self.type is not TileTypes.MINE:
+            self.type = TileTypes.CROSS
+            return True
+
+        self.state = State.UNCOVERED
+        return False
+
     def on_uncover(self):
         self.state = State.UNCOVERED
         if self.type is TileTypes.MINE:
@@ -52,11 +65,3 @@ class Tile:
             self.state = State.FLAGGED
         elif self.state is State.FLAGGED:
             self.state = State.COVERED
-
-    def is_dangerous(self):
-        if (self.state is State.COVERED and self.type is TileTypes.MINE):
-            return True
-
-        if (self.state is State.FLAGGED and self.type is not TileTypes.MINE):
-            return True
-        return False

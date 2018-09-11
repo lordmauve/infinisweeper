@@ -5,30 +5,37 @@ from enum_types import TileTypes, Tile, State
 
 
 class Grid:
+    # Number of rows ahead to generate. More rows reduces the chance that we
+    # flood-fill back into view (creating an unexpected pop) when new rows are
+    # generated.
+    LOOKAHEAD = 5
+
     def __init__(self, height=16, width=20):
         self.width = width
         self.data = {}
         self.next_adj = set()
 
-        self.miny = -1
-        for r in range(-1, height + 1):
+        self.miny = 0
+        for r in range(height + self.LOOKAHEAD):
             # Low rows must have no bombs
             if r < height * 0.5:
                 self.data[r] = self._gen_row(0.0)
                 self.maxy = r
             else:
                 self.push_row()
+        self.reveal((0, self.miny))
 
     def push_row(self):
         """Create a new row."""
-        mine_frac = min(1, self.maxy / 500) ** 0.5
+        mine_frac = 1.0 - 0.9 * 1.001 ** -self.maxy
         row = self._gen_row(mine_frac)
         self.maxy += 1
         self.data[self.maxy] = row
         self._calculate_row(self.maxy - 1)
-        for x in self.next_adj:
-            self.reveal((x, self.maxy - 1))
+
+        adj = [(x, self.maxy - 1) for x in self.next_adj]
         self.next_adj.clear()
+        self._flood_uncover(adj)
 
     def _gen_row(self, mine_frac):
         row = []
@@ -83,8 +90,11 @@ class Grid:
         Return the tile type uncovered.
 
         """
-        adj = {pos,}
-        visited = {pos,}
+        self._flood_uncover({pos})
+
+    def _flood_uncover(self, adj):
+        adj = set(adj)
+        visited = set()
 
         while adj:
             p = adj.pop()
